@@ -78,8 +78,8 @@ public class helpers {
 				System.out.println("-----------------------------------------------");
 			}
 			for(int i=0; i < known.length; i++){
-				double percentError = (Math.abs(Math.abs(predicted[i][0]-known[i][0])/known[i][0]) * 100);
-				meanpercentError += percentError;
+				double percentError = (Math.abs(predicted[i][0]-known[i][0])/known[i][0] * 100);
+				meanpercentError += Math.abs(percentError);
 				if(print){
 					System.out.format("%5d|%11f|%13f|%15f\n", i, known[i][0], predicted[i][0], percentError);
 				}
@@ -87,7 +87,7 @@ public class helpers {
 			if(print){
 				System.out.println("-----------------------------------------------");
 			}
-			System.out.format("Mean absolute percentage error:       %f\n",meanpercentError/known.length);
+			System.out.format("Mean absolute percentage error:       %f\n", meanpercentError/known.length);
 		}
 	}
 	
