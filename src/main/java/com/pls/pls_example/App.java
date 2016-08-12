@@ -19,7 +19,7 @@ public class App
     	PLS_method method = new PLS_method(data.xTrain, data.yTrain, 20);
     	double [][] yPrediction = predict(method, data.xTest);
     	try {
-			reportAccuracy(data.yTest, yPrediction, false);
+			reportAccuracy(data.yTest, yPrediction, true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
