@@ -86,9 +86,8 @@ public class helpers {
 			}
 			if(print){
 				System.out.println("-----------------------------------------------");
-				System.out.format("Mean absolute percentage error:       %f\n",meanpercentError/known.length);
-
 			}
+			System.out.format("Mean absolute percentage error:       %f\n",meanpercentError/known.length);
 		}
 	}
 	
