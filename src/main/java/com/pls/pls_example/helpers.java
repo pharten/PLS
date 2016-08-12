@@ -2,20 +2,10 @@ package com.pls.pls_example;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-
-import org.nd4j.linalg.api.complex.IComplexNDArray;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
-
-import org.nd4j.linalg.eigen.Eigen;
 
 public class helpers {
 	
@@ -72,6 +62,34 @@ public class helpers {
 		return tableDouble;
 	}
 	
+	public static double[][] predict(PLS_method method, double[][] X){
+		Matrix Xmat = new Matrix(X);
+		Matrix Wstar = new Matrix(method.getWstar());
+		return Xmat.times(Wstar).getArray();
+	}
 	
+	public static void reportAccuracy(double[][] known, double[][] predicted, boolean print) throws Exception{
+		if (known.length != predicted.length){
+			throw new Exception("Array Mismatch");
+		}else{
+			double meanpercentError = 0;
+			if(print){
+				System.out.println("     |  Known Y  | Predicted Y | Percent Error ");
+				System.out.println("-----------------------------------------------");
+			}
+			for(int i=0; i < known.length; i++){
+				double percentError = (Math.abs(Math.abs(predicted[i][0]-known[i][0])/known[i][0]) * 100);
+				meanpercentError += percentError;
+				if(print){
+					System.out.format("%5d|%11f|%13f|%15f\n", i, known[i][0], predicted[i][0], percentError);
+				}
+			}
+			if(print){
+				System.out.println("-----------------------------------------------");
+				System.out.format("Mean absolute percentage error:       %f\n",meanpercentError/known.length);
+
+			}
+		}
+	}
 	
 }

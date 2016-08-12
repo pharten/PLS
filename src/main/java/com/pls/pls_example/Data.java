@@ -1,9 +1,5 @@
 package com.pls.pls_example;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 public class Data {
 	double[][] xTrain;
 	double[][] yTrain;
@@ -11,7 +7,7 @@ public class Data {
 	double[][] yTest;
 	
 	public Data(double[][] csv){
-		gen_TrainTest(csv, .25);
+		gen_TrainTest(csv, 100);
 	}
 	
 	private double[][] getInput(double[][] array){
@@ -32,16 +28,24 @@ public class Data {
 		return tableDouble;
 	}
 	
-	private void gen_TrainTest(double[][] array, double precent){
-		int count = (int) (array.length - Math.floor(array.length * precent));
-		double [][] train = new double[count][array[0].length];
-		double [][] test = new double[array.length - count][array[0].length];
-		System.arraycopy(array, 0, train, 0, count);
-		System.arraycopy(array, count, test, 0, array.length - count);
+	private void gen_TrainTest(double[][] array, double percent){
+		int count = (int) (array.length - Math.floor(array.length * percent));
+		if(percent <= 0 || count > array.length || count <= 0){
+			xTrain = getInput(array);
+			yTrain = getOutput(array);
+			xTest = getInput(array);
+			yTest = getOutput(array);
+		}else{
+			double [][] train = new double[count][array[0].length];
+			double [][] test = new double[array.length - count][array[0].length];
+			System.arraycopy(array, 0, train, 0, count);
+			System.arraycopy(array, count, test, 0, array.length - count);
 
-		xTrain = getInput(train);
-		yTrain = getOutput(train);
-		xTest = getInput(test);
-		yTest = getOutput(test);
+			xTrain = getInput(train);
+			yTrain = getOutput(train);
+			xTest = getInput(test);
+			yTest = getOutput(test);
+		}
+		
 	}
 }

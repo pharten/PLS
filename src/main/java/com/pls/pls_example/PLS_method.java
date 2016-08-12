@@ -1,10 +1,6 @@
 package com.pls.pls_example;
 
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-
 import Jama.Matrix;
-import com.pls.pls_example.helpers;
 
 
 
@@ -209,7 +205,6 @@ public class PLS_method {
       
         // Calculate the coefficient vector
 
-        Matrix Wmat = new Matrix(W);
         Matrix Pmat = new Matrix(P);
         double[][] tempB = new double[B.length][B.length];
         for (int i = 0; i < B.length; i++){
