@@ -7,7 +7,7 @@ public class Data {
 	double[][] yTest;
 	
 	public Data(double[][] csv){
-		gen_TrainTest(csv, 100);
+		gen_TrainTest(csv, 80.0);
 	}
 	
 	private double[][] getInput(double[][] array){
@@ -29,7 +29,7 @@ public class Data {
 	}
 	
 	private void gen_TrainTest(double[][] array, double percent){
-		int count = (int) (array.length - Math.floor(array.length * percent));
+		int count = (int) (array.length - Math.floor(array.length * percent * 0.01));
 		if(percent <= 0 || count > array.length || count <= 0){
 			xTrain = getInput(array);
 			yTrain = getOutput(array);

@@ -76,6 +76,8 @@ public class PLS_method {
       
         double[] varX = new double[factors];
         double[] varY = new double[factors];
+        
+        int rank = 0;
       
         // Initialize the algorithm
         boolean stop = false;
@@ -98,10 +100,11 @@ public class PLS_method {
 
             double norm_t = Euclidean(t);
           
-            // Iteration region
+            // Iteration region; iterate until t stops changing
             while (norm_t > 1e-14){
                 // Store initial t to check convergence
                 double[] t0 = t;
+                
                 // Step 1. Estimate w (X weights): w proportional to E'*u
                 //   (in Abdi's paper, X is referred as E).
                 // 1.1. Compute w = E'*u;
@@ -116,6 +119,7 @@ public class PLS_method {
                 for (int i = 0; i < w.length; i++){
                     w[i] = w[i]/Ew;
                 }
+                
                 // Step 2. Estimate t (X factor scores): t proportional to E*w
                 //   (in Abdi's paper, X is referred as E).
                 // 2.1. Compute t = E*w
@@ -130,9 +134,10 @@ public class PLS_method {
                 for (int i = 0; i < t.length; i ++){
                     t[i] = t[i]/Et;
                 }
+                
                 // Step 3. Estimate c (Y weights): c  F't
                 //   (in Abdi's paper, Y is referred as F).
-                // 3.1. Compute c = F'*t0;
+                // 3.1. Compute c = F'*t;
                 c = new double[ycols];
                 for (int j = 0; j < c.length; j++){
                     for (int i = 0; i < t.length; i++){
@@ -142,6 +147,7 @@ public class PLS_method {
                 // 3.2. Normalize q: c = c/norm(q)
                 double Ec = Euclidean(c);
                 for (int i = 0; i < c.length; i++){c[i] = c[i]/Ec;}
+                
                 // Step 4. Estimate u (Y scores): u = F*q
                 //   (in Abdi's paper, Y is referred as F).
                 // 4.1. Compute u = F*q;
@@ -159,7 +165,7 @@ public class PLS_method {
                 }
                 norm_t = Math.sqrt(norm_t);
             }
-            // End iteration
+            // End iteration; t is an eigenvector of X
           
             // Compute the value of b which is used to
             // predict Y from t as b = t'u [Abdi, 2010]
@@ -167,6 +173,7 @@ public class PLS_method {
             for (int i = 0; i < t.length; i++){
                 b = b + t[i] * u[i];
             }
+            
             // Compute factor loadings for X as p = E'*t [Abdi, 2010]
             double[] p = new double[xcols];
             for (int j = 0; j < p.length; j++){
@@ -174,7 +181,8 @@ public class PLS_method {
                     p[j] = p[j] + E[i][j] * t[i];
                 }
             }
-            // Perform deflaction of X and Y
+            
+            // Perform deflation of X and Y
             for (int i = 0; i < t.length; i++){
                 // Deflate X as X = X - t*p';
                 for (int j = 0; j < p.length; j++){
@@ -182,7 +190,7 @@ public class PLS_method {
                 }
                 // Deflate Y as Y = Y - b*t*q';
                 for (int j = 0; j < c.length; j++){
-                    F[i][j] = F[i][j]- b * t[i] * c[j];
+                    F[i][j] = F[i][j] - b * t[i] * c[j];
                 }
             }
             
@@ -192,6 +200,7 @@ public class PLS_method {
             for (int i = 0; i < p.length; i++){
                 temp = temp + p[i] * p[i];
             }
+
             varX[factor] = temp;
             // Save iteration results
             for (int i = 0; i < t.length; i++){T[i][factor] = t[i];}
@@ -201,23 +210,38 @@ public class PLS_method {
             for (int i = 0; i < w.length; i++){W[i][factor] = w[i];}
             B[factor] = b;
           
+            stop = (temp<1.0e-17);
+            rank += 1;
         }
       
         // Calculate the coefficient vector
 
         Matrix Pmat = new Matrix(P);
-        double[][] tempB = new double[B.length][B.length];
-        for (int i = 0; i < B.length; i++){
-            tempB[i][i] = B[i];
-        }
-        Matrix Bmat = new Matrix(tempB);
-        Matrix PmatI = helpers.pinv(Pmat.transpose());
-        PmatI = PmatI.times(Bmat);
-        Matrix Cmat = new Matrix(C);
-        PmatI = PmatI.times(Cmat.transpose());
+        Pmat = Pmat.getMatrix(0, P.length-1, 0, rank-1);
+        Matrix Wmat = new Matrix(W);
+        Wmat = Wmat.getMatrix(0, W.length-1, 0, rank-1);
+        Matrix Qmat = new Matrix(C);
+        Matrix Bmat = new Matrix(B,B.length); 
+        
+        Bmat = (Wmat.times(((Pmat.transpose()).times(Wmat)).inverse())).times(Qmat);
+        Wstar = Bmat.getArray();
+//        Pmat = Pmat.times(Wmat);
+        
+//        double[][] tempB = new double[B.length][B.length];
+//        for (int i = 0; i < B.length; i++){
+//            tempB[i][i] = B[i];
+//        }
+//        Matrix Bmat = new Matrix(tempB);
+        
+//        Matrix Bmat = new Matrix(B,B.length);
+//        Matrix PmatI = helpers.pinv(Pmat.transpose());
+//        PmatI = PmatI.times(Bmat);
+//        Matrix Cmat = new Matrix(C);
+//        PmatI = PmatI.times(Cmat.transpose());
       
-        Wstar = PmatI.getArray();
+//        Wstar = PmatI.getArray();
     }
+    
     private double Euclidean(double[] vect){
         double result = 0;
         for (int i = 0; i < vect.length; i++){
