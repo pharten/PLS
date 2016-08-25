@@ -62,10 +62,12 @@ public class PLS_method {
         int xcols = X[0].length;
         int ycols = Y[0].length;
       
-        double[][] E = new double[rows][xcols];
-        E = X;
-        double[][] F = new double[rows][ycols];
-        F = Y;
+//        double[][] E = new double[rows][xcols];
+//        E = X;
+        double[][] E = zscore(X);
+//        double[][] F = new double[rows][ycols];
+//        F = Y;
+        double[][] F = zscore(Y);
       
         T = new double[rows][factors];
         U = new double[rows][factors];
@@ -73,6 +75,7 @@ public class PLS_method {
         C = new double[ycols][factors];
         W = new double[xcols][factors];
         B = new double[factors];
+        
       
         double[] varX = new double[factors];
         double[] varY = new double[factors];
@@ -115,10 +118,7 @@ public class PLS_method {
                     }
                 }
                 // 1.2. Normalize w (w = w/norm(w))
-                double Ew = Euclidean(w);
-                for (int i = 0; i < w.length; i++){
-                    w[i] = w[i]/Ew;
-                }
+                w = normalize(w);
                 
                 // Step 2. Estimate t (X factor scores): t proportional to E*w
                 //   (in Abdi's paper, X is referred as E).
@@ -130,10 +130,7 @@ public class PLS_method {
                     }
                 }
                 // 2.2. Normalize t: t = t/norm(t)
-                double Et = Euclidean(t);
-                for (int i = 0; i < t.length; i ++){
-                    t[i] = t[i]/Et;
-                }
+                t = normalize(t);
                 
                 // Step 3. Estimate c (Y weights): c  F't
                 //   (in Abdi's paper, Y is referred as F).
@@ -145,8 +142,7 @@ public class PLS_method {
                     }
                 }
                 // 3.2. Normalize q: c = c/norm(q)
-                double Ec = Euclidean(c);
-                for (int i = 0; i < c.length; i++){c[i] = c[i]/Ec;}
+                c = normalize(c);
                 
                 // Step 4. Estimate u (Y scores): u = F*q
                 //   (in Abdi's paper, Y is referred as F).
@@ -157,6 +153,7 @@ public class PLS_method {
                         u[i] = u[i] + F[i][j] * c[j];
                     }
                 }
+                
                 // Recalculate norm of the difference
                 norm_t = 0.0;
                 for (int i = 0; i < t.length; i++){
@@ -165,7 +162,6 @@ public class PLS_method {
                 }
                 norm_t = Math.sqrt(norm_t);
             }
-            // End iteration; t is an eigenvector of X
           
             // Compute the value of b which is used to
             // predict Y from t as b = t'u [Abdi, 2010]
@@ -195,13 +191,13 @@ public class PLS_method {
             }
             
             // Calculate explained variances
-            varY[factor] = b * b;
+            varY[factor] = b * b; 
             double temp = 0;
             for (int i = 0; i < p.length; i++){
                 temp = temp + p[i] * p[i];
             }
-
             varX[factor] = temp;
+            
             // Save iteration results
             for (int i = 0; i < t.length; i++){T[i][factor] = t[i];}
             for (int i = 0; i < p.length; i++){P[i][factor] = p[i];}
@@ -217,55 +213,101 @@ public class PLS_method {
         // Calculate the coefficient vector
 
         Matrix Pmat = new Matrix(P);
-        Pmat = Pmat.getMatrix(0, P.length-1, 0, rank-1);
-        Matrix Wmat = new Matrix(W);
-        Wmat = Wmat.getMatrix(0, W.length-1, 0, rank-1);
-        Matrix Qmat = new Matrix(C);
-        Matrix Bmat = new Matrix(B,B.length); 
-        
-        Bmat = (Wmat.times(((Pmat.transpose()).times(Wmat)).inverse())).times(Qmat);
-        Wstar = Bmat.getArray();
+//        Pmat = Pmat.getMatrix(0, P.length-1, 0, rank-1);
+//        Matrix Wmat = new Matrix(W);
+//        Wmat = Wmat.getMatrix(0, W.length-1, 0, rank-1);
+//        Matrix Qmat = new Matrix(C);
+//        Matrix Bmat = new Matrix(B,B.length); 
+//        
+//        Bmat = (Wmat.times(((Pmat.transpose()).times(Wmat)).inverse())).times(Qmat);
+//        Wstar = Bmat.getArray();
 //        Pmat = Pmat.times(Wmat);
         
-//        double[][] tempB = new double[B.length][B.length];
-//        for (int i = 0; i < B.length; i++){
-//            tempB[i][i] = B[i];
-//        }
-//        Matrix Bmat = new Matrix(tempB);
+        double[][] tempB = new double[B.length][B.length];
+        for (int i = 0; i < B.length; i++){
+            tempB[i][i] = B[i];
+        }
+        Matrix Bmat = new Matrix(tempB);
         
 //        Matrix Bmat = new Matrix(B,B.length);
-//        Matrix PmatI = helpers.pinv(Pmat.transpose());
-//        PmatI = PmatI.times(Bmat);
-//        Matrix Cmat = new Matrix(C);
-//        PmatI = PmatI.times(Cmat.transpose());
+        Matrix PmatI = helpers.pinv(Pmat.transpose());
+        PmatI = PmatI.times(Bmat);
+        Matrix Cmat = new Matrix(C);
+//        PmatI = (Cmat.times(PmatI.transpose())).transpose();
+        PmatI = PmatI.times(Cmat.transpose());
       
-//        Wstar = PmatI.getArray();
+        Wstar = PmatI.getArray();
     }
     
     private double Euclidean(double[] vect){
         double result = 0;
         for (int i = 0; i < vect.length; i++){
-            result = result + Math.pow(vect[i], 2);
+            result = result + vect[i]*vect[i];
         }
         result = Math.sqrt(result);
         return result;
     }
   
     private int largest(double[][] matrix){
-            int rows = matrix.length;
-            int cols = matrix[0].length;
-            int index = 0;
-            double max = 0;
-            for (int i = 0; i < cols; i++){
-                double squareSum = 0.0;
-                for (int j = 0; j < rows; j++){
-                    squareSum = squareSum + matrix[j][i] * matrix[j][i];
-                }
-                if (squareSum > max){
-                    max = squareSum;
-                    index = i;
-                }
-            }
-            return index;
+    	int rows = matrix.length;
+    	int cols = matrix[0].length;
+    	int index = 0;
+    	double max = 0;
+    	for (int i = 0; i < cols; i++){
+    		double squareSum = 0.0;
+    		for (int j = 0; j < rows; j++){
+    			squareSum = squareSum + matrix[j][i] * matrix[j][i];
+    		}
+    		if (squareSum > max){
+    			max = squareSum;
+    			index = i;
+    		}
+    	}
+    	return index;
+    }
+    
+    private double[] normalize(double[] v){
+        double result = 0;
+        for (int i = 0; i < v.length; i++){
+            result = result + v[i]*v[i];
         }
+        result = Math.sqrt(result);
+        if (result == 0.0) throw new Error("vector magnitude is zero");
+        for (int i = 0; i < v.length; i++){
+            v[i] /= result;
+        }
+        return v;
+    }
+    
+    private double[][] zscore(double[][] x) {
+    	double avg, var, std;
+    	int ncols, nrows;
+    	
+    	nrows = x.length;
+    	ncols = x[0].length;
+    	
+    	double[][] y = new double[nrows][ncols];
+    	y = x;
+    	
+    	for (int j=0; j<=y[0].length-1; j++) {
+    		avg = 0.0;
+    		for (int i=0; i<=y.length-1; i++) {
+    			avg += y[i][j];
+    		}
+    		avg = avg/y.length;
+    		var = 0.0;
+    		for (int i=0; i<=y.length-1; i++) {
+    			y[i][j] -= avg;
+    			var += y[i][j]*y[i][j];
+    		}
+    		var = var/y.length;
+    		std = Math.sqrt(var);
+    		if (std==0) throw new Error("standard deviation is zero");
+    		for (int i=0; i<=y.length-1; i++) {
+    			y[i][j] /= std;
+    		}
+    	}
+    	return y;
+    	
+    }
 }

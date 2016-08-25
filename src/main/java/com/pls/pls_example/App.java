@@ -19,10 +19,8 @@ public class App
     	double[][] csv = readCSV(filePath);
     	Data data = new Data(csv);
     	
-//    	Matrix Dmat = new Matrix(csv);
-//    	int rank = Dmat.svd().rank();
-    	
     	PLS_method method = new PLS_method(data.xTrain, data.yTrain, 20);
+   
     	double [][] yPrediction = predict(method, data.xTest);
     	try {
 			reportAccuracy(data.yTest, yPrediction, true);

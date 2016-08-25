@@ -7,7 +7,7 @@ public class Data {
 	double[][] yTest;
 	
 	public Data(double[][] csv){
-		gen_TrainTest(csv, 80.0);
+		gen_TrainTest(csv, 100.0);
 	}
 	
 	private double[][] getInput(double[][] array){
